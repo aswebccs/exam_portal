@@ -15,9 +15,9 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "client": "npm run dev --prefix frontend",
+    "exam-client": "npm run dev --prefix exam-module",
     "server": "npm run dev --prefix backend",
-    "dev": "concurrently \"npm run server\" \"npm run client\""
+    "dev": "concurrently \"npm run server\" \"npm run exam-client\""
   },
   "keywords": [],
   "devDependencies": {
