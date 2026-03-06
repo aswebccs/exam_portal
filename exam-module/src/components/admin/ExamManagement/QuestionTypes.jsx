@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 
+const API_ROOT = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/exam-module').replace('/api/exam-module', '');
+
 const FALLBACK_QUESTION_TYPES = [
   {
     code: 'MSA',
@@ -84,7 +86,7 @@ const QuestionTypes = () => {
   const loadTypes = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/exam-management/question-types', { headers: getAuthHeaders() });
+      const response = await fetch(`${API_ROOT}/api/exam-management/question-types`, { headers: getAuthHeaders() });
       const result = await response.json();
 
       if (result.success && Array.isArray(result.data) && result.data.length > 0) {
@@ -117,7 +119,7 @@ const QuestionTypes = () => {
   const handleToggleStatus = async (type) => {
     if (!type.id) return;
     try {
-      const response = await fetch(`http://localhost:5000/api/exam-management/question-types/${type.id}/toggle`, {
+      const response = await fetch(`${API_ROOT}/api/exam-management/question-types/${type.id}/toggle`, {
         method: 'PATCH',
         headers: getAuthHeaders(),
       });

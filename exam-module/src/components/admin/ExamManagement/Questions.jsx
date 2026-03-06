@@ -3,6 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { Plus, Save, X } from 'lucide-react';
 import { API_ENDPOINTS } from '../../../config/api';
 
+const API_ROOT = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/exam-module').replace('/api/exam-module', '');
+
 const QUESTION_TYPE_FALLBACK = [
   { code: 'MSA', name: 'Multiple Choice Single Answer', is_active: true },
   { code: 'MMA', name: 'Multiple Choice Multiple Answers', is_active: true },
@@ -192,7 +194,7 @@ const Questions = ({ examId, examTitle, levelName, onComplete }) => {
 
   const loadExams = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/exam-management/exams?page=1&limit=200');
+      const response = await fetch(`${API_ROOT}/api/exam-management/exams?page=1&limit=200`);
       const result = await response.json();
       if (!result.success) return;
       const normalizedExams = (result.data || []).map((e) => ({ ...e, id: getExamId(e) }));
@@ -219,7 +221,7 @@ const Questions = ({ examId, examTitle, levelName, onComplete }) => {
 
   const loadExamTypes = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/exam-management/exam-types');
+      const response = await fetch(`${API_ROOT}/api/exam-management/exam-types`);
       const result = await response.json();
       if (result.success && Array.isArray(result.data) && result.data.length) {
         setExamTypes(result.data);
@@ -233,7 +235,7 @@ const Questions = ({ examId, examTitle, levelName, onComplete }) => {
 
   const loadQuestionTypes = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/exam-management/question-types', { headers: getAuthHeaders() });
+      const response = await fetch(`${API_ROOT}/api/exam-management/question-types`, { headers: getAuthHeaders() });
       const result = await response.json();
       if (result.success && Array.isArray(result.data) && result.data.length) {
         setQuestionTypes(result.data);
@@ -247,7 +249,7 @@ const Questions = ({ examId, examTitle, levelName, onComplete }) => {
 
   const loadExamModules = async (examIdParam) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/exam-management/exams/${examIdParam}/modules`);
+      const response = await fetch(`${API_ROOT}/api/exam-management/exams/${examIdParam}/modules`);
       const result = await response.json();
       if (result.success) setQuestionModules(result.data);
     } catch (error) {
@@ -258,7 +260,7 @@ const Questions = ({ examId, examTitle, levelName, onComplete }) => {
   const loadExamQuestions = async (examIdParam) => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/exam-management/exams/${examIdParam}/questions`);
+      const response = await fetch(`${API_ROOT}/api/exam-management/exams/${examIdParam}/questions`);
       const result = await response.json();
       if (result.success) {
         const normalizedQuestions = (result.data || []).map((q) => ({
@@ -277,7 +279,7 @@ const Questions = ({ examId, examTitle, levelName, onComplete }) => {
   };
 
   const ensureExamModules = async (examIdToUse) => {
-    const existingResponse = await fetch(`http://localhost:5000/api/exam-management/exams/${examIdToUse}/modules`);
+    const existingResponse = await fetch(`${API_ROOT}/api/exam-management/exams/${examIdToUse}/modules`);
     const existingResult = await existingResponse.json();
     const existing = existingResult.success ? existingResult.data : [];
 
@@ -291,7 +293,7 @@ const Questions = ({ examId, examTitle, levelName, onComplete }) => {
         display_order: existing.length + idx + 1,
       }));
 
-      await fetch(`http://localhost:5000/api/exam-management/exams/${examIdToUse}/modules`, {
+      await fetch(`${API_ROOT}/api/exam-management/exams/${examIdToUse}/modules`, {
         method: 'POST',
         headers: getAuthHeaders(true),
         body: JSON.stringify({ modules: payload }),
@@ -656,7 +658,7 @@ const Questions = ({ examId, examTitle, levelName, onComplete }) => {
           };
         });
 
-        const createResponse = await fetch(`http://localhost:5000/api/exam-management/exams/${confirmedExamId}/questions`, {
+        const createResponse = await fetch(`${API_ROOT}/api/exam-management/exams/${confirmedExamId}/questions`, {
           method: 'POST',
           headers: getAuthHeaders(true),
           body: JSON.stringify({
@@ -685,7 +687,7 @@ const Questions = ({ examId, examTitle, levelName, onComplete }) => {
         }
 
         const updateResponse = await fetch(
-          `http://localhost:5000/api/exam-management/exams/${confirmedExamId}/questions/${q.id}`,
+          `${API_ROOT}/api/exam-management/exams/${confirmedExamId}/questions/${q.id}`,
           {
             method: 'PUT',
             headers: getAuthHeaders(true),

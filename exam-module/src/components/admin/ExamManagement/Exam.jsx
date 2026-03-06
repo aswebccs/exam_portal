@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { API_ENDPOINTS } from '../../../config/api';
 
+const API_ROOT = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/exam-module').replace('/api/exam-module', '');
+
 const Exams = ({ onNext }) => {
   const navigate = useNavigate();
   const [exams, setExams] = useState([]);
@@ -106,7 +108,7 @@ const Exams = ({ onNext }) => {
         ...(filterStatus && { status: filterStatus })
       });
 
-      const res = await fetch(`http://localhost:5000/api/exam-management/exams?${params}`);
+      const res = await fetch(`${API_ROOT}/api/exam-management/exams?${params}`);
       const result = await res.json();
 
       if (result.success) {
@@ -147,8 +149,8 @@ const Exams = ({ onNext }) => {
 
     try {
       const url = editingExam
-        ? `http://localhost:5000/api/exam-management/exams/${editingExam.id}`
-        : 'http://localhost:5000/api/exam-management/exams';
+        ? `${API_ROOT}/api/exam-management/exams/${editingExam.id}`
+        : `${API_ROOT}/api/exam-management/exams`;
 
       const payload = {
         title: trimmedTitle,
@@ -212,7 +214,7 @@ const Exams = ({ onNext }) => {
     try {
       setConfirmModal(prev => ({ ...prev, isProcessing: true }));
       const endpoint = confirmModal.action === 'toggle'
-        ? `http://localhost:5000/api/exam-management/exams/${id}/toggle${confirmModal.force ? '?force=true' : ''}`
+        ? `${API_ROOT}/api/exam-management/exams/${id}/toggle${confirmModal.force ? '?force=true' : ''}`
         : `${API_ENDPOINTS.EXAM_DELETE(id)}${confirmModal.force ? '?force=true' : ''}`;
       const res = await fetch(endpoint, { 
         method: confirmModal.action === 'toggle' ? 'PATCH' : 'DELETE',
@@ -252,7 +254,7 @@ const Exams = ({ onNext }) => {
 
   const handleToggle = async (id) => {
     try {
-    const res = await fetch(`http://localhost:5000/api/exam-management/exams/${id}/toggle`, { method: 'PATCH', headers: getAuthHeaders() });
+    const res = await fetch(`${API_ROOT}/api/exam-management/exams/${id}/toggle`, { method: 'PATCH', headers: getAuthHeaders() });
       const result = await res.json();
       if (!res.ok) {
         if (res.status === 409 && result?.requires_force) {
@@ -329,7 +331,7 @@ const Exams = ({ onNext }) => {
 
   const handleToggleResultVisibility = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/exam-management/exams/${id}/toggle-result-visibility`, {
+      const res = await fetch(`${API_ROOT}/api/exam-management/exams/${id}/toggle-result-visibility`, {
         method: 'PATCH',
         headers: getAuthHeaders()
       });
@@ -652,7 +654,6 @@ const Exams = ({ onNext }) => {
 };
 
 export default Exams;
-
 
 
 

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { authStorage } from '../../../App';
 
+const API_ROOT = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api/exam-module').replace('/api/exam-module', '');
+
 const ExamAttempts = () => {
   const [rows, setRows] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,7 +19,7 @@ const ExamAttempts = () => {
   const fetchAttempts = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/exam-management/attempts', {
+      const response = await axios.get(`${API_ROOT}/api/exam-management/attempts`, {
         params: {
           page,
           limit: 10,
@@ -57,7 +59,7 @@ const ExamAttempts = () => {
             onClick={async () => {
               try {
                 const token = authStorage.getToken();
-                const response = await fetch('http://localhost:5000/api/exam-module/admin/results/export?format=csv', {
+                const response = await fetch(`${API_ROOT}/api/exam-module/admin/results/export?format=csv`, {
                   headers: { Authorization: `Bearer ${token}` }
                 });
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -186,5 +188,4 @@ const ExamAttempts = () => {
 };
 
 export default ExamAttempts;
-
 
