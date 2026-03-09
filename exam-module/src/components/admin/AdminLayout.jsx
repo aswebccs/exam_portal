@@ -34,15 +34,25 @@ const AdminLayout = ({ children }) => {
   };
 
   const path = location.pathname;
-  const isExamRoute = path.startsWith('/admin/exam-management');
+  const examMenuRoutes = [
+    '/admin/exam-management/exam',
+    '/admin/exam-management/questions',
+    '/admin/exam-management/question-types',
+    '/admin/exam-management/attempts',
+    '/admin/exam-management/recycle-bin',
+  ];
+  const isExamRoute = examMenuRoutes.some((route) => path.startsWith(route));
+  const navButtonBase = sidebarOpen
+    ? "w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200"
+    : "w-full flex items-center justify-center px-0 py-3 rounded-lg transition-all duration-200";
 
   return (
     <div className="min-h-screen bg-gray-100 flex">
       {/* Sidebar */}
       <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-gray-200 transition-all duration-300 flex-shrink-0 hidden md:block`}>
-        <div className="p-6">
+        <div className={`${sidebarOpen ? "p-6" : "p-3"}`}>
           <div className="flex items-center justify-between mb-8">
-            <h1 className={`text-xl font-bold text-gray-800 ${!sidebarOpen && 'hidden'}`}>CCS</h1>
+            <h1 className={`text-xl font-bold text-gray-800 ${!sidebarOpen && 'hidden'}`}>Exam Portal</h1>
             <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
               <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -53,8 +63,12 @@ const AdminLayout = ({ children }) => {
           <nav className="space-y-2">
 
             <button
-              onClick={() => setExamMenuOpen((v) => !v)}
-              className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+              onClick={() => {
+                if (sidebarOpen) setExamMenuOpen((v) => !v);
+                else navigate('/admin/exam-management/exam');
+              }}
+              title={!sidebarOpen ? "Exams" : undefined}
+              className={`${navButtonBase} ${sidebarOpen ? "justify-between" : ""} ${
                 isExamRoute ? 'bg-blue-50 text-blue-600 ring-2 ring-blue-200' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -116,7 +130,8 @@ const AdminLayout = ({ children }) => {
 
             <button
               onClick={() => navigate('/admin/exam-management/institutes')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+              title={!sidebarOpen ? "Institutes" : undefined}
+              className={`${navButtonBase} ${
                 path === '/admin/exam-management/institutes' ? 'bg-blue-50 text-blue-600 ring-2 ring-blue-200' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -126,7 +141,8 @@ const AdminLayout = ({ children }) => {
 
             <button
               onClick={() => navigate('/admin/exam-management/groups')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+              title={!sidebarOpen ? "Groups" : undefined}
+              className={`${navButtonBase} ${
                 path === '/admin/exam-management/groups' ? 'bg-blue-50 text-blue-600 ring-2 ring-blue-200' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -136,7 +152,8 @@ const AdminLayout = ({ children }) => {
 
             <button
               onClick={() => navigate('/admin/exam-management/students')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+              title={!sidebarOpen ? "Students" : undefined}
+              className={`${navButtonBase} ${
                 path === '/admin/exam-management/students' ? 'bg-blue-50 text-blue-600 ring-2 ring-blue-200' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -146,7 +163,8 @@ const AdminLayout = ({ children }) => {
 
             <button
               onClick={() => navigate('/admin/exam-management/assignments')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+              title={!sidebarOpen ? "Assignments" : undefined}
+              className={`${navButtonBase} ${
                 path === '/admin/exam-management/assignments' ? 'bg-blue-50 text-blue-600 ring-2 ring-blue-200' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -156,7 +174,8 @@ const AdminLayout = ({ children }) => {
 
             <button
               onClick={() => navigate('/admin/exam-management/results')}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+              title={!sidebarOpen ? "Results" : undefined}
+              className={`${navButtonBase} ${
                 path === '/admin/exam-management/results' ? 'bg-blue-50 text-blue-600 ring-2 ring-blue-200' : 'text-gray-600 hover:bg-gray-50'
               }`}
             >
@@ -166,7 +185,8 @@ const AdminLayout = ({ children }) => {
 
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 mt-4"
+              title={!sidebarOpen ? "Logout" : undefined}
+              className={`${navButtonBase} text-gray-600 hover:bg-red-50 hover:text-red-600 mt-4`}
             >
               <LogOut className="w-5 h-5" />
               {sidebarOpen && <span className="font-medium">Logout</span>}

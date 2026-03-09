@@ -20,7 +20,6 @@ export default function ResultManagement() {
   const [loading, setLoading] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [visibilitySaving, setVisibilitySaving] = useState(false);
-  const [rowSavingKey, setRowSavingKey] = useState("");
   const [exportAction, setExportAction] = useState("csv");
   const [resultAction, setResultAction] = useState("show");
   const [notice, setNotice] = useState("");
@@ -134,21 +133,6 @@ export default function ResultManagement() {
     notify(`${showResult ? "Show" : "Hide"} result applied for ${successCount}/${pairs.length} selected record(s)`);
   };
 
-  const handleSingleResultVisibility = async (row, showResult) => {
-    const rowKey = `${row.exam_id}::${row.student_id}`;
-    if (!row.exam_id || !row.student_id) return;
-    setRowSavingKey(rowKey);
-    try {
-      await examApi.setStudentResultVisibility(row.exam_id, row.student_id, showResult, token);
-      await loadResults();
-      notify(`Result ${showResult ? "shown" : "hidden"} for ${row.student_name || "student"}`);
-    } catch (err) {
-      notify(err.message || "Failed to update result visibility");
-    } finally {
-      setRowSavingKey("");
-    }
-  };
-
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
@@ -222,15 +206,15 @@ export default function ResultManagement() {
                 onChange={(e) => setExportAction(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg text-sm min-w-[150px]"
               >
-                <option value="csv">Export CSV</option>
-                <option value="xlsx">Export Excel</option>
+                <option value="csv">CSV</option>
+                <option value="xlsx">Excel</option>
               </select>
               <button
                 onClick={handleExport}
                 disabled={exporting}
                 className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                {exporting ? "Running..." : "Run"}
+                {exporting ? "Exporting..." : "Export"}
               </button>
             </div>
 
@@ -271,23 +255,20 @@ export default function ResultManagement() {
               </th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Student</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Exam</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-gray-600">Score</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-gray-600">Total</th>
-              <th className="px-4 py-3 text-right text-xs font-semibold uppercase text-gray-600">%</th>
+              <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Score</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600 w-[120px]">Status</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600 w-[140px]">Visibility</th>
-              <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600 w-[130px]">Action</th>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Submitted At</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td className="px-4 py-4 text-sm text-gray-500" colSpan={10}>Loading results...</td>
+                <td className="px-4 py-4 text-sm text-gray-500" colSpan={7}>Loading results...</td>
               </tr>
             ) : results.length === 0 ? (
               <tr>
-                <td className="px-4 py-8 text-sm text-gray-500 text-center" colSpan={10}>No results match current filters</td>
+                <td className="px-4 py-8 text-sm text-gray-500 text-center" colSpan={7}>No results match current filters</td>
               </tr>
             ) : (
               results.map((row, index) => {
@@ -305,12 +286,12 @@ export default function ResultManagement() {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-800">
                       <div className="font-medium">{row.student_name || "-"}</div>
-                      <div className="text-xs text-gray-500">{row.student_email || "-"}</div>
+                      <div className="text-xs text-gray-500">Roll: {row.student_roll_number || "-"}</div>
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-700">{row.exam_title || "-"}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 text-right">{row.score ?? 0}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 text-right">{row.total_marks ?? 0}</td>
-                    <td className="px-4 py-3 text-sm text-gray-700 text-right">{row.percentage ?? 0}</td>
+                    <td className="px-4 py-3 text-sm text-gray-700">
+                      {`${row.score ?? 0}/${row.total_marks ?? 0}, ${row.percentage ?? 0}%`}
+                    </td>
                     <td className="px-4 py-3 text-sm">
                       <span className={`px-2 py-1 rounded text-xs font-semibold ${String(row.result_status || "").toUpperCase() === "PASSED" ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"}`}>
                         {row.result_status || "-"}
@@ -321,20 +302,18 @@ export default function ResultManagement() {
                         {row.show_result === false ? "Hidden" : "Visible"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm">
-                      <button
-                        onClick={() => handleSingleResultVisibility(row, row.show_result === false)}
-                        disabled={rowSavingKey === rowKey}
-                        className={`px-3 py-1.5 rounded text-xs font-semibold disabled:opacity-50 ${
-                          row.show_result === false
-                            ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                            : "bg-amber-50 text-amber-700 hover:bg-amber-100"
-                        }`}
-                      >
-                        {rowSavingKey === rowKey ? "Updating..." : row.show_result === false ? "Show" : "Hide"}
-                      </button>
+                    <td className="px-4 py-3 text-sm text-gray-600">
+                      {row.submitted_at
+                        ? new Date(row.submitted_at).toLocaleString([], {
+                            year: "numeric",
+                            month: "short",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true,
+                          })
+                        : "-"}
                     </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">{row.submitted_at ? new Date(row.submitted_at).toLocaleString() : "-"}</td>
                   </tr>
                 );
               })

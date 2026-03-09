@@ -24,6 +24,7 @@ router.put("/admin/exams/:examId/questions/:questionId", authMiddleware, examMod
 router.delete("/admin/exams/:examId/questions/:questionId", authMiddleware, examModuleController.deleteExamQuestionByAdmin);
 router.get("/admin/students", authMiddleware, examModuleController.listStudentsByAdmin);
 router.post("/admin/students", authMiddleware, examModuleController.createStudentByAdmin);
+router.patch("/admin/students/status/bulk", authMiddleware, examModuleController.bulkUpdateStudentStatusByAdmin);
 router.patch("/admin/students/:studentId", authMiddleware, examModuleController.updateStudentByAdmin);
 router.patch("/admin/students/:studentId/status", authMiddleware, examModuleController.updateStudentStatusByAdmin);
 router.post("/admin/students/bulk-upload", authMiddleware, upload.single("file"), examModuleController.bulkUploadStudentsByAdmin);

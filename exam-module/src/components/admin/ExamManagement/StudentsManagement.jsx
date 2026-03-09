@@ -32,6 +32,8 @@ export default function StudentsManagement({ mode = "all" }) {
   const [assignments, setAssignments] = useState([]);
   const [selectedExamId, setSelectedExamId] = useState("");
   const [selectedStudentIds, setSelectedStudentIds] = useState([]);
+  const [selectedStatusStudentIds, setSelectedStatusStudentIds] = useState([]);
+  const [statusBulkAction, setStatusBulkAction] = useState("active");
   const [bulkAction, setBulkAction] = useState("assign");
 
   const [searchName, setSearchName] = useState("");
@@ -224,6 +226,10 @@ export default function StudentsManagement({ mode = "all" }) {
     () => visibleStudentIds.length > 0 && visibleStudentIds.every((id) => selectedStudentIds.includes(id)),
     [visibleStudentIds, selectedStudentIds]
   );
+  const isAllStatusSelected = useMemo(
+    () => visibleStudentIds.length > 0 && visibleStudentIds.every((id) => selectedStatusStudentIds.includes(id)),
+    [visibleStudentIds, selectedStatusStudentIds]
+  );
 
   const groupsForSelectedInstituteFilter = useMemo(() => {
     if (!filterInstituteId) return groups;
@@ -239,6 +245,10 @@ export default function StudentsManagement({ mode = "all" }) {
     if (!editForm.institute_id) return [];
     return groups.filter((g) => String(g.institute_id) === String(editForm.institute_id));
   }, [groups, editForm.institute_id]);
+
+  useEffect(() => {
+    setSelectedStatusStudentIds((prev) => prev.filter((id) => visibleStudentIds.includes(id)));
+  }, [visibleStudentIds]);
 
   const toggleStudentAssignment = async (studentId, assignedNow) => {
     if (!selectedExamId) return;
@@ -268,6 +278,25 @@ export default function StudentsManagement({ mode = "all" }) {
       notify(err.message || "Failed to update student status");
     } finally {
       setSavingRowId("");
+    }
+  };
+
+  const handleBulkStatusUpdate = async () => {
+    if (!selectedStatusStudentIds.length) {
+      notify("Select at least one student");
+      return;
+    }
+    setBulkSaving(true);
+    try {
+      const nextActive = statusBulkAction === "active";
+      await examApi.bulkUpdateAdminStudentStatus(selectedStatusStudentIds, nextActive, token);
+      notify(`Selected students marked as ${nextActive ? "active" : "inactive"}`);
+      setSelectedStatusStudentIds([]);
+      await loadStudents();
+    } catch (err) {
+      notify(err.message || "Failed to update student status");
+    } finally {
+      setBulkSaving(false);
     }
   };
 
@@ -378,7 +407,30 @@ export default function StudentsManagement({ mode = "all" }) {
               <button onClick={downloadTemplate} className="bg-gray-700 hover:bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-medium">
                 Download CSV Template
               </button>
+              <div className="flex flex-col md:flex-row md:items-center gap-3">
+             
+              <div className="flex gap-2">
+                <select
+                  value={statusBulkAction}
+                  onChange={(e) => setStatusBulkAction(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
+                >
+                  <option value="active">Mark Selected Active</option>
+                  <option value="inactive">Mark Selected Inactive</option>
+                </select>
+                <button
+                  onClick={handleBulkStatusUpdate}
+                  disabled={!selectedStatusStudentIds.length || bulkSaving}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                >
+                  {bulkSaving ? "Applying..." : "Apply"}
+                </button>
+              </div>
             </div>
+
+            </div>
+
+            
 
             <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
               <input type="text" value={searchName} onChange={(e) => setSearchName(e.target.value)} placeholder="Search by name" className="px-3 py-2 border border-gray-300 rounded-lg text-sm" />
@@ -417,6 +469,19 @@ export default function StudentsManagement({ mode = "all" }) {
             <table className="min-w-full">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600 w-12">
+                    <input
+                      type="checkbox"
+                      checked={isAllStatusSelected}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedStatusStudentIds((prev) => Array.from(new Set([...prev, ...visibleStudentIds])));
+                        } else {
+                          setSelectedStatusStudentIds((prev) => prev.filter((id) => !visibleStudentIds.includes(id)));
+                        }
+                      }}
+                    />
+                  </th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Name</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Roll Number</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold uppercase text-gray-600">Institute</th>
@@ -428,12 +493,24 @@ export default function StudentsManagement({ mode = "all" }) {
               </thead>
               <tbody>
                 {loading ? (
-                  <tr><td className="px-4 py-4 text-sm text-gray-500" colSpan={7}>Loading students...</td></tr>
+                  <tr><td className="px-4 py-4 text-sm text-gray-500" colSpan={8}>Loading students...</td></tr>
                 ) : students.length === 0 ? (
-                  <tr><td className="px-4 py-4 text-sm text-gray-500" colSpan={7}>No students found</td></tr>
+                  <tr><td className="px-4 py-4 text-sm text-gray-500" colSpan={8}>No students found</td></tr>
                 ) : (
                   students.map((student) => (
                     <tr key={student.id} className="border-t border-gray-200">
+                      <td className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={selectedStatusStudentIds.includes(String(student.id))}
+                          onChange={(e) => {
+                            const studentId = String(student.id);
+                            setSelectedStatusStudentIds((prev) =>
+                              e.target.checked ? [...prev, studentId] : prev.filter((id) => id !== studentId)
+                            );
+                          }}
+                        />
+                      </td>
                       <td className="px-4 py-3 text-sm font-medium text-gray-800">{student.full_name || "-"}</td>
                       <td className="px-4 py-3 text-sm text-gray-700">{student.roll_number || "-"}</td>
                       <td className="px-4 py-3 text-sm text-gray-600">{student.institute_name || "-"}</td>

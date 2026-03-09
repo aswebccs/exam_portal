@@ -1208,6 +1208,7 @@ exports.listExamAssignmentsByAdmin = async (req, res) => {
         ea.assigned_at,
         u.id AS student_id,
         u.name,
+        u.roll_number,
         u.email,
         COALESCE(erv.show_result, e.show_result) AS show_result,
         erv.show_result AS show_result_override
@@ -2051,6 +2052,43 @@ exports.updateStudentStatusByAdmin = async (req, res) => {
   }
 };
 
+exports.bulkUpdateStudentStatusByAdmin = async (req, res) => {
+  try {
+    if (!hasAdminAccess(req, res)) return;
+
+    const studentIds = Array.isArray(req.body?.student_ids)
+      ? req.body.student_ids.map((id) => String(id || "").trim()).filter(Boolean)
+      : [];
+    const isActive = req.body?.is_active;
+
+    if (!studentIds.length || typeof isActive !== "boolean") {
+      return res.status(400).json({ success: false, message: "student_ids(array) and is_active(boolean) are required" });
+    }
+
+    const result = await pool.query(
+      `
+      UPDATE users
+      SET is_active = $1
+      WHERE id = ANY($2::uuid[]) AND user_type = $3
+      RETURNING id, name AS full_name, roll_number, is_active
+      `,
+      [isActive, studentIds, STUDENT_USER_TYPE]
+    );
+
+    return res.json({
+      success: true,
+      message: `Updated ${result.rowCount} students`,
+      data: {
+        updated_count: result.rowCount,
+        students: result.rows,
+      },
+    });
+  } catch (err) {
+    console.error("EXAM MODULE ADMIN BULK UPDATE STUDENT STATUS ERROR:", err.message);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
 exports.bulkUploadStudentsByAdmin = async (req, res) => {
   try {
     if (!hasAdminAccess(req, res)) return;
@@ -2190,6 +2228,7 @@ exports.listResultsByAdmin = async (req, res) => {
         ea.result_status,
         ea.attempted_at AS submitted_at,
         u.name AS student_name,
+        u.roll_number AS student_roll_number,
         u.email AS student_email,
         u.institute_id,
         u.group_id,
@@ -2233,6 +2272,7 @@ exports.exportResultsByAdmin = async (req, res) => {
       SELECT
         ea.user_id AS student_id,
         u.name AS student_name,
+        u.roll_number AS student_roll_number,
         u.email AS student_email,
         u.institute_id,
         u.group_id,
@@ -2258,8 +2298,23 @@ exports.exportResultsByAdmin = async (req, res) => {
     if (instituteId) rows = rows.filter((r) => String(r.institute_id || "") === instituteId);
     if (groupId) rows = rows.filter((r) => String(r.group_id || "") === groupId);
     if (status) rows = rows.filter((r) => String(r.result_status || "").toUpperCase() === status);
+
+    const exportRows = rows.map((row) => ({
+      student_name: row.student_name,
+      student_roll_number: row.student_roll_number,
+      student_email: row.student_email,
+      exam_id: row.exam_id,
+      exam_title: row.exam_title,
+      score: row.score,
+      total_marks: row.total_marks,
+      percentage: row.percentage,
+      result_status: row.result_status,
+      show_result: row.show_result,
+      submitted_at: row.submitted_at,
+    }));
+
     if (format === "xlsx") {
-      const sheet = XLSX.utils.json_to_sheet(rows);
+      const sheet = XLSX.utils.json_to_sheet(exportRows);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, sheet, "Results");
       const buffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
@@ -2269,8 +2324,8 @@ exports.exportResultsByAdmin = async (req, res) => {
     }
 
     const headers = [
-      "student_id",
       "student_name",
+      "student_roll_number",
       "student_email",
       "exam_id",
       "exam_title",
@@ -2283,7 +2338,7 @@ exports.exportResultsByAdmin = async (req, res) => {
     ];
     const csvRows = [
       headers.join(","),
-      ...rows.map((row) =>
+      ...exportRows.map((row) =>
         headers.map((h) => `"${String(row[h] ?? "").replace(/"/g, '""')}"`).join(",")
       ),
     ];

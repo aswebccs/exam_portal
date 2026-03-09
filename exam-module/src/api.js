@@ -202,6 +202,18 @@ export const examApi = {
     return parseJson(response);
   },
 
+  async bulkUpdateAdminStudentStatus(studentIds, isActive, token) {
+    const response = await fetch(`${API_BASE_URL}/admin/students/status/bulk`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ student_ids: studentIds, is_active: Boolean(isActive) }),
+    });
+    return parseJson(response);
+  },
+
   async getAdminInstitutes(token, search = "") {
     const params = new URLSearchParams();
     if (String(search || "").trim()) params.set("search", String(search).trim());
