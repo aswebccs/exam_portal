@@ -169,7 +169,7 @@ const AdminLayout = ({ children }) => {
               }`}
             >
               <Briefcase className="w-5 h-5" />
-              {sidebarOpen && <span className="font-medium">Assignments</span>}
+              {sidebarOpen && <span className="font-medium">Assign Exam</span>}
             </button>
 
             <button

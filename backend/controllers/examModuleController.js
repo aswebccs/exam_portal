@@ -2276,6 +2276,8 @@ exports.exportResultsByAdmin = async (req, res) => {
         u.email AS student_email,
         u.institute_id,
         u.group_id,
+        i.institute_name,
+        g.group_name,
         ea.exam_id,
         e.title AS exam_title,
         COALESCE(erv.show_result, e.show_result) AS show_result,
@@ -2286,6 +2288,8 @@ exports.exportResultsByAdmin = async (req, res) => {
         ea.attempted_at AS submitted_at
       FROM exam_attempts ea
       LEFT JOIN users u ON u.id = ea.user_id
+      LEFT JOIN institutes i ON i.id = u.institute_id
+      LEFT JOIN student_groups g ON g.id = u.group_id
       LEFT JOIN exams e ON e.id = ea.exam_id
       LEFT JOIN exam_result_visibility erv ON erv.exam_id = ea.exam_id AND erv.student_id = ea.user_id
       ORDER BY ea.attempted_at DESC
@@ -2299,18 +2303,23 @@ exports.exportResultsByAdmin = async (req, res) => {
     if (groupId) rows = rows.filter((r) => String(r.group_id || "") === groupId);
     if (status) rows = rows.filter((r) => String(r.result_status || "").toUpperCase() === status);
 
+    const formatResultStatus = (value) => {
+      const normalized = String(value || "").trim().toUpperCase();
+      if (normalized === "PASSED") return "Passed";
+      if (normalized === "FAILED") return "Failed";
+      return normalized || "";
+    };
+
     const exportRows = rows.map((row) => ({
-      student_name: row.student_name,
-      student_roll_number: row.student_roll_number,
-      student_email: row.student_email,
-      exam_id: row.exam_id,
-      exam_title: row.exam_title,
-      score: row.score,
-      total_marks: row.total_marks,
-      percentage: row.percentage,
-      result_status: row.result_status,
-      show_result: row.show_result,
-      submitted_at: row.submitted_at,
+      "Student Name": row.student_name || "",
+      "Roll Number": row.student_roll_number || "",
+      "Institute / College": row.institute_name || "",
+      "Group / Department": row.group_name || "",
+      "Exam Name": row.exam_title || "",
+      "Score": row.score ?? "",
+      "Percentage": row.percentage ?? "",
+      "Result Status (Passed / Failed)": formatResultStatus(row.result_status),
+      "Submitted At": row.submitted_at ? new Date(row.submitted_at).toISOString() : "",
     }));
 
     if (format === "xlsx") {
@@ -2324,17 +2333,15 @@ exports.exportResultsByAdmin = async (req, res) => {
     }
 
     const headers = [
-      "student_name",
-      "student_roll_number",
-      "student_email",
-      "exam_id",
-      "exam_title",
-      "score",
-      "total_marks",
-      "percentage",
-      "result_status",
-      "show_result",
-      "submitted_at",
+      "Student Name",
+      "Roll Number",
+      "Institute / College",
+      "Group / Department",
+      "Exam Name",
+      "Score",
+      "Percentage",
+      "Result Status (Passed / Failed)",
+      "Submitted At",
     ];
     const csvRows = [
       headers.join(","),
