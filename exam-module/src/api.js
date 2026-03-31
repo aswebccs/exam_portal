@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api/exam-module";
+import { fetchWithFailover } from "./config/api";
 
 const parseJson = async (response) => {
   const payload = await response.json().catch(() => ({}));
@@ -8,9 +8,11 @@ const parseJson = async (response) => {
   return payload;
 };
 
+const fetchFromApi = (path, options = {}) => fetchWithFailover(path, options, { scope: "module" });
+
 export const examApi = {
   async login(username, password) {
-    const response = await fetch(`${API_BASE_URL}/login`, {
+    const response = await fetchFromApi(`/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -19,7 +21,7 @@ export const examApi = {
   },
 
   async loginAdmin(username, password) {
-    const response = await fetch(`${API_BASE_URL}/admin/login`, {
+    const response = await fetchFromApi(`/admin/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, password }),
@@ -28,14 +30,14 @@ export const examApi = {
   },
 
   async getAdminExams(token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams`, {
+    const response = await fetchFromApi(`/admin/exams`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async createExam(payload, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams`, {
+    const response = await fetchFromApi(`/admin/exams`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -47,7 +49,7 @@ export const examApi = {
   },
 
   async toggleAdminExam(examId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams/${examId}/toggle`, {
+    const response = await fetchFromApi(`/admin/exams/${examId}/toggle`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -55,7 +57,7 @@ export const examApi = {
   },
 
   async setAdminExamResultVisibility(examId, showResult, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams/${examId}/result-visibility`, {
+    const response = await fetchFromApi(`/admin/exams/${examId}/result-visibility`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -67,7 +69,7 @@ export const examApi = {
   },
 
   async deleteAdminExam(examId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams/${examId}`, {
+    const response = await fetchFromApi(`/admin/exams/${examId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -75,14 +77,14 @@ export const examApi = {
   },
 
   async getAdminExamQuestions(examId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams/${examId}/questions`, {
+    const response = await fetchFromApi(`/admin/exams/${examId}/questions`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async createAdminExamQuestions(examId, questions, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams/${examId}/questions`, {
+    const response = await fetchFromApi(`/admin/exams/${examId}/questions`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -94,7 +96,7 @@ export const examApi = {
   },
 
   async updateAdminExamQuestion(examId, questionId, payload, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams/${examId}/questions/${questionId}`, {
+    const response = await fetchFromApi(`/admin/exams/${examId}/questions/${questionId}`, {
       method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -106,7 +108,7 @@ export const examApi = {
   },
 
   async deleteAdminExamQuestion(examId, questionId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams/${examId}/questions/${questionId}`, {
+    const response = await fetchFromApi(`/admin/exams/${examId}/questions/${questionId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -114,35 +116,35 @@ export const examApi = {
   },
 
   async getExams(token) {
-    const response = await fetch(`${API_BASE_URL}/exams`, {
+    const response = await fetchFromApi(`/exams`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async getInstructions(examId, token) {
-    const response = await fetch(`${API_BASE_URL}/exams/${examId}/instructions`, {
+    const response = await fetchFromApi(`/exams/${examId}/instructions`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async getQuestions(examId, token) {
-    const response = await fetch(`${API_BASE_URL}/exams/${examId}/questions`, {
+    const response = await fetchFromApi(`/exams/${examId}/questions`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async getStudentResult(examId, token) {
-    const response = await fetch(`${API_BASE_URL}/exams/${examId}/result`, {
+    const response = await fetchFromApi(`/exams/${examId}/result`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async submitExam(examId, answers, token) {
-    const response = await fetch(`${API_BASE_URL}/exams/${examId}/submit`, {
+    const response = await fetchFromApi(`/exams/${examId}/submit`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -160,14 +162,14 @@ export const examApi = {
     if (String(filters.institute_id || "").trim()) params.set("institute_id", String(filters.institute_id).trim());
     if (String(filters.group_id || "").trim()) params.set("group_id", String(filters.group_id).trim());
     if (filters.is_active === true || filters.is_active === false) params.set("is_active", String(filters.is_active));
-    const response = await fetch(`${API_BASE_URL}/admin/students?${params.toString()}`, {
+    const response = await fetchFromApi(`/admin/students?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async createAdminStudent(payload, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/students`, {
+    const response = await fetchFromApi(`/admin/students`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -179,7 +181,7 @@ export const examApi = {
   },
 
   async updateAdminStudent(studentId, payload, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/students/${studentId}`, {
+    const response = await fetchFromApi(`/admin/students/${studentId}`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -191,7 +193,7 @@ export const examApi = {
   },
 
   async updateAdminStudentStatus(studentId, isActive, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/students/${studentId}/status`, {
+    const response = await fetchFromApi(`/admin/students/${studentId}/status`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -203,7 +205,7 @@ export const examApi = {
   },
 
   async bulkUpdateAdminStudentStatus(studentIds, isActive, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/students/status/bulk`, {
+    const response = await fetchFromApi(`/admin/students/status/bulk`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -217,14 +219,14 @@ export const examApi = {
   async getAdminInstitutes(token, search = "") {
     const params = new URLSearchParams();
     if (String(search || "").trim()) params.set("search", String(search).trim());
-    const response = await fetch(`${API_BASE_URL}/admin/institutes?${params.toString()}`, {
+    const response = await fetchFromApi(`/admin/institutes?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async createAdminInstitute(instituteName, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/institutes`, {
+    const response = await fetchFromApi(`/admin/institutes`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -236,7 +238,7 @@ export const examApi = {
   },
 
   async updateAdminInstitute(instituteId, instituteName, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/institutes/${instituteId}`, {
+    const response = await fetchFromApi(`/admin/institutes/${instituteId}`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -248,7 +250,7 @@ export const examApi = {
   },
 
   async deleteAdminInstitute(instituteId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/institutes/${instituteId}`, {
+    const response = await fetchFromApi(`/admin/institutes/${instituteId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -259,14 +261,14 @@ export const examApi = {
     const params = new URLSearchParams();
     if (String(instituteId || "").trim()) params.set("institute_id", String(instituteId).trim());
     if (String(search || "").trim()) params.set("search", String(search).trim());
-    const response = await fetch(`${API_BASE_URL}/admin/groups?${params.toString()}`, {
+    const response = await fetchFromApi(`/admin/groups?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async createAdminGroup(payload, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/groups`, {
+    const response = await fetchFromApi(`/admin/groups`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -278,7 +280,7 @@ export const examApi = {
   },
 
   async updateAdminGroup(groupId, payload, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/groups/${groupId}`, {
+    const response = await fetchFromApi(`/admin/groups/${groupId}`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -290,7 +292,7 @@ export const examApi = {
   },
 
   async deleteAdminGroup(groupId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/groups/${groupId}`, {
+    const response = await fetchFromApi(`/admin/groups/${groupId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -298,14 +300,14 @@ export const examApi = {
   },
 
   async getDeletedInstitutes(token) {
-    const response = await fetch(`${API_BASE_URL}/admin/recycle-bin/institutes`, {
+    const response = await fetchFromApi(`/admin/recycle-bin/institutes`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async restoreDeletedInstitute(instituteId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/recycle-bin/institutes/${instituteId}/restore`, {
+    const response = await fetchFromApi(`/admin/recycle-bin/institutes/${instituteId}/restore`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -313,7 +315,7 @@ export const examApi = {
   },
 
   async permanentlyDeleteInstitute(instituteId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/recycle-bin/institutes/${instituteId}/permanent`, {
+    const response = await fetchFromApi(`/admin/recycle-bin/institutes/${instituteId}/permanent`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -321,14 +323,14 @@ export const examApi = {
   },
 
   async getDeletedGroups(token) {
-    const response = await fetch(`${API_BASE_URL}/admin/recycle-bin/groups`, {
+    const response = await fetchFromApi(`/admin/recycle-bin/groups`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async restoreDeletedGroup(groupId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/recycle-bin/groups/${groupId}/restore`, {
+    const response = await fetchFromApi(`/admin/recycle-bin/groups/${groupId}/restore`, {
       method: "PATCH",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -336,7 +338,7 @@ export const examApi = {
   },
 
   async permanentlyDeleteGroup(groupId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/recycle-bin/groups/${groupId}/permanent`, {
+    const response = await fetchFromApi(`/admin/recycle-bin/groups/${groupId}/permanent`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -346,7 +348,7 @@ export const examApi = {
   async bulkUploadStudents(file, token) {
     const formData = new FormData();
     formData.append("file", file);
-    const response = await fetch(`${API_BASE_URL}/admin/students/bulk-upload`, {
+    const response = await fetchFromApi(`/admin/students/bulk-upload`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}` },
       body: formData,
@@ -355,7 +357,7 @@ export const examApi = {
   },
 
   async assignStudentsToExam(examId, studentIds, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams/${examId}/assignments`, {
+    const response = await fetchFromApi(`/admin/exams/${examId}/assignments`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -367,21 +369,21 @@ export const examApi = {
   },
 
   async getExamAssignments(examId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams/${examId}/assignments`, {
+    const response = await fetchFromApi(`/admin/exams/${examId}/assignments`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async getExamAssignmentLogs(examId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams/${examId}/assignment-logs`, {
+    const response = await fetchFromApi(`/admin/exams/${examId}/assignment-logs`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
   },
 
   async removeExamAssignment(examId, studentId, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams/${examId}/assignments/${studentId}`, {
+    const response = await fetchFromApi(`/admin/exams/${examId}/assignments/${studentId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -389,7 +391,7 @@ export const examApi = {
   },
 
   async setStudentResultVisibility(examId, studentId, showResult, token) {
-    const response = await fetch(`${API_BASE_URL}/admin/exams/${examId}/assignments/${studentId}/result-visibility`, {
+    const response = await fetchFromApi(`/admin/exams/${examId}/assignments/${studentId}/result-visibility`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -408,7 +410,7 @@ export const examApi = {
     if (filters.group_id) params.set("group_id", String(filters.group_id));
     if (filters.result_status) params.set("result_status", String(filters.result_status));
     const queryString = params.toString();
-    const response = await fetch(`${API_BASE_URL}/admin/results${queryString ? `?${queryString}` : ""}`, {
+    const response = await fetchFromApi(`/admin/results${queryString ? `?${queryString}` : ""}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return parseJson(response);
@@ -423,7 +425,7 @@ export const examApi = {
     if (filters.group_id) params.set("group_id", String(filters.group_id));
     if (filters.result_status) params.set("result_status", String(filters.result_status));
 
-    const response = await fetch(`${API_BASE_URL}/admin/results/export?${params.toString()}`, {
+    const response = await fetchFromApi(`/admin/results/export?${params.toString()}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
@@ -447,3 +449,5 @@ export const examApi = {
     };
   },
 };
+
+
