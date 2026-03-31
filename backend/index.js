@@ -40,7 +40,16 @@ app.use("/api/exam-management", examManagementCompatRoutes);
 
 let initPromise = null;
 
+const shouldAutoInitSchema = () => {
+  const flag = String(process.env.AUTO_INIT_SCHEMA ?? "true").trim().toLowerCase();
+  return !["false", "0", "no", "off"].includes(flag);
+};
+
 const ensureInitialized = async () => {
+  if (!shouldAutoInitSchema()) {
+    return;
+  }
+
   if (!initPromise) {
     initPromise = initSchema().catch((error) => {
       initPromise = null;
