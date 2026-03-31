@@ -10,5 +10,9 @@ const pool = new Pool({
     ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false
 });
 
+// Prevent process crash on unexpected idle-client disconnects.
+pool.on("error", (err) => {
+    console.error("Unexpected PostgreSQL pool error:", err.code || err.message);
+});
 
 module.exports = pool;
